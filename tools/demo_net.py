@@ -5,7 +5,7 @@ import numpy as np
 import time
 import torch
 import tqdm
-
+from slowfast.utils.misc import get_class_names
 from slowfast.utils import logging
 from slowfast.visualization.async_predictor import AsyncDemo, AsyncVis
 from slowfast.visualization.ava_demo_precomputed_boxes import (
@@ -100,6 +100,8 @@ def demo(cfg):
         cfg (CfgNode): configs. Details can be found in
             slowfast/config/defaults.py
     """
+    class_names, _, _ = get_class_names(cfg.DEMO.LABEL_FILE_PATH, None, None)
+    #print(class_names)
     # AVA format-specific visualization with precomputed boxes.
     if cfg.DETECTION.ENABLE and cfg.DEMO.PREDS_BOXES != "":
         precomputed_box_vis = AVAVisualizerWithPrecomputedBox(cfg)
@@ -112,6 +114,25 @@ def demo(cfg):
             frame_provider = VideoManager(cfg)
 
         for task in tqdm.tqdm(run_demo(cfg, frame_provider)):
+            print(task.id ,"-->",task.frames.shape,task.action_preds.shape,task.bboxes.shape,task.clip_vis_size,task.num_buffer_frames)
+            middle_frame = task.frames[len(task.frames) // 2]
+            bbox =task.bboxes
+            print("middle_frame.shape",middle_frame.shape)
+            print("bbox.shape",bbox.shape)
+            preds =task.action_preds
+
+            top_scores, top_classes, labels = [], [],[]
+            for pred in preds :
+                mask = pred >= 0.7
+                top_scores.append(pred[mask].tolist())
+                top_class = torch.squeeze(torch.nonzero(mask), dim=-1).tolist()
+                top_classes.append(top_class)
+                lbls= [class_names[i] for i in top_class]
+                labels.append(lbls)
+            print("top_scores",top_scores)
+            #print("top_classes",top_classes)
+            print("labels",labels)
+            #print("preds.shape",preds.shape)
             frame_provider.display(task)
 
         frame_provider.join()

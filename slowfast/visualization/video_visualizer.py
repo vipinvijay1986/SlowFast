@@ -544,7 +544,7 @@ class VideoVisualizer:
             draw_range[0] = max(0, draw_range[0])
             left_frames = frames[: draw_range[0]]
             right_frames = frames[draw_range[1] + 1 :]
-
+        print("drawRange",draw_range)
         draw_frames = frames[draw_range[0] : draw_range[1] + 1]
         if keyframe_idx is None:
             keyframe_idx = len(frames) // 2

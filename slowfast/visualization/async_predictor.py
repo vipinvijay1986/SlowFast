@@ -147,8 +147,11 @@ class AsyncVis:
                 if isinstance(task, _StopToken):
                     break
 
-                frames = draw_predictions(task, self.video_vis)
+                frames,boxes,key_frame_index,key_frame = draw_predictions(task, self.video_vis)
                 task.frames = np.array(frames)
+                task.set_key_frame_index(key_frame_index)
+                task.add_key_frame(key_frame)
+                task.add_resized_boxes(boxes)
                 self.result_queue.put(task)
 
     def __init__(self, video_vis, n_workers=None):
@@ -295,6 +298,7 @@ def draw_predictions(task, video_vis):
         )
 
     keyframe_idx = len(frames) // 2 - task.num_buffer_frames
+    key_frame=frames[keyframe_idx]
     draw_range = [
         keyframe_idx - task.clip_vis_size,
         keyframe_idx + task.clip_vis_size,
@@ -316,4 +320,4 @@ def draw_predictions(task, video_vis):
         )
     del task
 
-    return buffer + frames
+    return buffer + frames,boxes,keyframe_idx,key_frame

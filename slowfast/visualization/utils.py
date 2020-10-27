@@ -351,6 +351,9 @@ class TaskInfo:
         self.img_width = -1
         self.crop_size = -1
         self.clip_vis_size = -1
+        self.resized_boxes =None
+        self.key_frame_index=-1
+        self.key_frame=None
 
     def add_frames(self, idx, frames):
         """
@@ -373,3 +376,21 @@ class TaskInfo:
         Add the corresponding action predictions.
         """
         self.action_preds = preds
+    
+    def add_resized_boxes(self, bboxes):
+        """
+        Add resized bounding boxes.
+        """
+        self.resized_boxes = bboxes
+
+    def set_key_frame_index(self, key_frame_index):
+        """
+        Set key frame index
+        """
+        self.key_frame_index = key_frame_index
+
+    def add_key_frame(self, key_frame):
+        """
+        Set key frame  
+        """
+        self.key_frame = key_frame

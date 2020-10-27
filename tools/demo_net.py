@@ -14,7 +14,8 @@ from slowfast.visualization.ava_demo_precomputed_boxes import (
 from slowfast.visualization.demo_loader import ThreadVideoManager, VideoManager
 from slowfast.visualization.predictor import ActionPredictor
 from slowfast.visualization.video_visualizer import VideoVisualizer
-
+import pandas as pd
+from PIL import Image
 logger = logging.get_logger(__name__)
 
 
@@ -100,6 +101,7 @@ def demo(cfg):
         cfg (CfgNode): configs. Details can be found in
             slowfast/config/defaults.py
     """
+    df_frames = pd.DataFrame(columns=['Task_id', 'Frame_file', 'Bbox_x0', 'Bbox_x1', 'Bbox_y0', 'Bbox_y1', 'Action', 'Scores'])
     class_names, _, _ = get_class_names(cfg.DEMO.LABEL_FILE_PATH, None, None)
     #print(class_names)
     # AVA format-specific visualization with precomputed boxes.
@@ -133,8 +135,48 @@ def demo(cfg):
             #print("top_classes",top_classes)
             print("labels",labels)
             #print("preds.shape",preds.shape)
+            print('_________________________')
+            for b in bbox :
+                x0, y0, x1, y1 = b
+                x0 = int(x0.item())
+                x1 = int(x1.item())
+                y0 = int(y0.item())
+                y1 = int(y1.item())
+                print('\t', x0, x1, y0, y1,)
+            print('************************')
+            bbox =task.resized_boxes
+            print('_________RESIZED BOX________________')
+            for b in bbox :
+                x0, y0, x1, y1 = b
+                x0 = int(x0.item())
+                x1 = int(x1.item())
+                y0 = int(y0.item())
+                y1 = int(y1.item())
+                print('\t', x0, x1, y0, y1,)
+            print('************************')
+            frame_file = "/content/SlowFastData/demo/frame_" + str(task.id) + '.jpg'
+            im = Image.fromarray(task.frames[task.key_frame_index])
+            im.save(frame_file)
+            key_frame_file = "/content/SlowFastData/demo/frame_" + str(task.id) + '_key.jpg'
+            im = Image.fromarray(task.key_frame)
+            im.save(key_frame_file)
+            for idx, box in enumerate(task.resized_boxes) :
+                x0, y0, x1, y1 = box
+                x0 = int(x0.item())
+                x1 = int(x1.item())
+                y0 = int(y0.item())
+                y1 = int(y1.item())
+                print('No of rows={0}, INSERTING NEW ROW...'.format(df_frames.index))
+                df_frames.loc[len(df_frames.index)] = [task.id, frame_file, x0, x1, y0, y1, labels[idx], top_scores[idx]]
+
+
+
             frame_provider.display(task)
 
         frame_provider.join()
         frame_provider.clean()
+        print(df_frames)
+        frame_csv = '/content/SlowFastData/demo/frames.csv'
+        df_frames.to_csv(frame_csv)
         logger.info("Finish demo in: {}".format(time.time() - start))
+

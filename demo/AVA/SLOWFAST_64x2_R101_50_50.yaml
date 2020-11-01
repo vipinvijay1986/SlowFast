@@ -74,3 +74,4 @@ DEMO:
   INPUT_VIDEO: /content/SlowFastData/demo/KidsCycling.mp4  # Path to a video file or image folder
   GT_BOXES: ./demo/AVA/aava_train_v2.2.csv # Path to ground-truth boxes and labels in AVA format (optional).
   IGNORE_LBL: [58,78]
+  SAVE_ACTION_FILE_PATH : /content/SlowFastData/demo/output

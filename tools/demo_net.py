@@ -116,67 +116,67 @@ def demo(cfg):
             frame_provider = VideoManager(cfg)
 
         for task in tqdm.tqdm(run_demo(cfg, frame_provider)):
-            print(task.id ,"-->",task.frames.shape,task.action_preds.shape,task.bboxes.shape,task.clip_vis_size,task.num_buffer_frames)
-            middle_frame = task.frames[len(task.frames) // 2]
-            bbox =task.bboxes
-            print("middle_frame.shape",middle_frame.shape)
-            print("bbox.shape",bbox.shape)
-            preds =task.action_preds
+            if cfg.DEMO.SAVE_ACTION_FILE_PATH !='':
+                    
+                print(task.id ,"-->",task.frames.shape,task.action_preds.shape,task.bboxes.shape,task.clip_vis_size,task.num_buffer_frames)
+                middle_frame = task.frames[len(task.frames) // 2]
+                bbox =task.bboxes
+                print("middle_frame.shape",middle_frame.shape)
+                print("bbox.shape",bbox.shape)
+                preds =task.action_preds
 
-            top_scores, top_classes, labels = [], [],[]
-            for pred in preds :
-                mask = pred >= 0.7
-                top_scores.append(pred[mask].tolist())
-                top_class = torch.squeeze(torch.nonzero(mask), dim=-1).tolist()
-                top_classes.append(top_class)
-                lbls= [class_names[i] for i in top_class]
-                labels.append(lbls)
-            print("top_scores",top_scores)
-            #print("top_classes",top_classes)
-            print("labels",labels)
-            #print("preds.shape",preds.shape)
-            print('_________________________')
-            for b in bbox :
-                x0, y0, x1, y1 = b
-                x0 = int(x0.item())
-                x1 = int(x1.item())
-                y0 = int(y0.item())
-                y1 = int(y1.item())
-                print('\t', x0, x1, y0, y1,)
-            print('************************')
-            bbox =task.resized_boxes
-            print('_________RESIZED BOX________________')
-            for b in bbox :
-                x0, y0, x1, y1 = b
-                x0 = int(x0.item())
-                x1 = int(x1.item())
-                y0 = int(y0.item())
-                y1 = int(y1.item())
-                print('\t', x0, x1, y0, y1,)
-            print('************************')
-            frame_file = "/content/SlowFastData/demo/frame_" + str(task.id) + '.jpg'
-            im = Image.fromarray(task.frames[task.key_frame_index])
-            im.save(frame_file)
-            key_frame_file = "/content/SlowFastData/demo/frame_" + str(task.id) + '_key.jpg'
-            im = Image.fromarray(task.key_frame)
-            im.save(key_frame_file)
-            for idx, box in enumerate(task.resized_boxes) :
-                x0, y0, x1, y1 = box
-                x0 = int(x0.item())
-                x1 = int(x1.item())
-                y0 = int(y0.item())
-                y1 = int(y1.item())
-                print('No of rows={0}, INSERTING NEW ROW...'.format(df_frames.index))
-                df_frames.loc[len(df_frames.index)] = [task.id, frame_file, x0, x1, y0, y1, labels[idx], top_scores[idx]]
-
-
-
+                top_scores, top_classes, labels = [], [],[]
+                for pred in preds :
+                    mask = pred >= 0.7
+                    top_scores.append(pred[mask].tolist())
+                    top_class = torch.squeeze(torch.nonzero(mask), dim=-1).tolist()
+                    top_classes.append(top_class)
+                    lbls= [class_names[i] for i in top_class]
+                    labels.append(lbls)
+                print("top_scores",top_scores)
+                #print("top_classes",top_classes)
+                print("labels",labels)
+                #print("preds.shape",preds.shape)
+                print('_________________________')
+                for b in bbox :
+                    x0, y0, x1, y1 = b
+                    x0 = int(x0.item())
+                    x1 = int(x1.item())
+                    y0 = int(y0.item())
+                    y1 = int(y1.item())
+                    print('\t', x0, x1, y0, y1,)
+                print('************************')
+                bbox =task.resized_boxes
+                print('_________RESIZED BOX________________')
+                for b in bbox :
+                    x0, y0, x1, y1 = b
+                    x0 = int(x0.item())
+                    x1 = int(x1.item())
+                    y0 = int(y0.item())
+                    y1 = int(y1.item())
+                    print('\t', x0, x1, y0, y1,)
+                print('************************')
+                frame_file = cfg.DEMO.SAVE_ACTION_FILE_PATH+"/frame_" + str(task.id) + '.jpg'
+                im = Image.fromarray(task.frames[task.key_frame_index])
+                im.save(frame_file)
+                key_frame_file = cfg.DEMO.SAVE_ACTION_FILE_PATH+"/frame_" + str(task.id) + '_key.jpg'
+                im = Image.fromarray(task.key_frame)
+                im.save(key_frame_file)
+                for idx, box in enumerate(task.resized_boxes) :
+                    x0, y0, x1, y1 = box
+                    x0 = int(x0.item())
+                    x1 = int(x1.item())
+                    y0 = int(y0.item())
+                    y1 = int(y1.item())
+                    print('No of rows={0}, INSERTING NEW ROW...'.format(df_frames.index))
+                    df_frames.loc[len(df_frames.index)] = [task.id, frame_file, x0, x1, y0, y1, labels[idx], top_scores[idx]]
             frame_provider.display(task)
 
         frame_provider.join()
         frame_provider.clean()
-        print(df_frames)
-        frame_csv = '/content/SlowFastData/demo/frames.csv'
-        df_frames.to_csv(frame_csv)
+        if cfg.DEMO.SAVE_ACTION_FILE_PATH !='':
+            print(df_frames)
+            frame_csv = cfg.DEMO.SAVE_ACTION_FILE_PATH+'/frames.csv'
+            df_frames.to_csv(frame_csv)
         logger.info("Finish demo in: {}".format(time.time() - start))
 

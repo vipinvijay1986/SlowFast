@@ -761,6 +761,8 @@ _C.DEMO.SLOWMO = 1
 # Label which should not be displayed in final display
 _C.DEMO.IGNORE_LBL=[]
 
+_C.DEMO.SAVE_ACTION_FILE_PATH=''
+
 # Add custom config with default values.
 custom_config.add_custom_config(_C)
 

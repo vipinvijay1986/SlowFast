@@ -101,9 +101,12 @@ def demo(cfg):
         cfg (CfgNode): configs. Details can be found in
             slowfast/config/defaults.py
     """
-    df_frames = pd.DataFrame(columns=['Task_id', 'Frame_file', 'Bbox_x0', 'Bbox_x1', 'Bbox_y0', 'Bbox_y1', 'Action', 'Scores'])
     class_names, _, _ = get_class_names(cfg.DEMO.LABEL_FILE_PATH, None, None)
-    #print(class_names)
+    print(class_names)
+    columns=['Task_id', 'Frame_file', 'Bbox_x0', 'Bbox_x1', 'Bbox_y0', 'Bbox_y1', 'Action', 'Scores']
+    columns.extend(class_names)
+    df_frames = pd.DataFrame(columns=columns)
+    
     # AVA format-specific visualization with precomputed boxes.
     if cfg.DETECTION.ENABLE and cfg.DEMO.PREDS_BOXES != "":
         precomputed_box_vis = AVAVisualizerWithPrecomputedBox(cfg)
@@ -128,6 +131,7 @@ def demo(cfg):
                 top_scores, top_classes, labels = [], [],[]
                 for pred in preds :
                     mask = pred >= 0.7
+                    print(pred.shape)
                     top_scores.append(pred[mask].tolist())
                     top_class = torch.squeeze(torch.nonzero(mask), dim=-1).tolist()
                     top_classes.append(top_class)
@@ -169,7 +173,9 @@ def demo(cfg):
                     y0 = int(y0.item())
                     y1 = int(y1.item())
                     print('No of rows={0}, INSERTING NEW ROW...'.format(df_frames.index))
-                    df_frames.loc[len(df_frames.index)] = [task.id, frame_file, x0, x1, y0, y1, labels[idx], top_scores[idx]]
+                    row_data =[task.id, frame_file, x0, x1, y0, y1, labels[idx], top_scores[idx]]
+                    row_data.extend(preds[idx].tolist())
+                    df_frames.loc[len(df_frames.index)] = row_data
             frame_provider.display(task)
 
         frame_provider.join()

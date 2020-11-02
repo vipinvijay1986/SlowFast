@@ -160,10 +160,10 @@ def demo(cfg):
                     y1 = int(y1.item())
                     print('\t', x0, x1, y0, y1,)
                 print('************************')
-                frame_file = cfg.DEMO.SAVE_ACTION_FILE_PATH+"/frame_" + str(task.id) + '.jpg'
+                frame_file = cfg.DEMO.SAVE_ACTION_FILE_PATH+"/frame_withbounds_" + str(task.id) + '.jpg'
                 im = Image.fromarray(task.frames[task.key_frame_index])
                 im.save(frame_file)
-                key_frame_file = cfg.DEMO.SAVE_ACTION_FILE_PATH+"/frame_" + str(task.id) + '_key.jpg'
+                key_frame_file = cfg.DEMO.SAVE_ACTION_FILE_PATH+"/frame_" + str(task.id) + '.jpg'
                 im = Image.fromarray(task.key_frame)
                 im.save(key_frame_file)
                 for idx, box in enumerate(task.resized_boxes) :

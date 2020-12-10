@@ -17,7 +17,7 @@ from slowfast.visualization.video_visualizer import VideoVisualizer
 import pandas as pd
 from PIL import Image
 logger = logging.get_logger(__name__)
-
+import cv2
 
 def run_demo(cfg, frame_provider):
     """
@@ -103,7 +103,7 @@ def demo(cfg):
     """
     class_names, _, _ = get_class_names(cfg.DEMO.LABEL_FILE_PATH, None, None)
     print(class_names)
-    columns=['Task_id', 'Frame_file', 'Bbox_x0', 'Bbox_x1', 'Bbox_y0', 'Bbox_y1', 'Action', 'Scores']
+    columns=['Task_id', 'Frame_file','ImageRef','FrameIndex', 'Bbox_x0', 'Bbox_x1', 'Bbox_y0', 'Bbox_y1', 'Action', 'Scores']
     columns.extend(class_names)
     df_frames = pd.DataFrame(columns=columns)
     
@@ -121,11 +121,9 @@ def demo(cfg):
         for task in tqdm.tqdm(run_demo(cfg, frame_provider)):
             if cfg.DEMO.SAVE_ACTION_FILE_PATH !='':
                     
-                print(task.id ,"-->",task.frames.shape,task.action_preds.shape,task.bboxes.shape,task.clip_vis_size,task.num_buffer_frames)
-                middle_frame = task.frames[len(task.frames) // 2]
-                bbox =task.bboxes
-                print("middle_frame.shape",middle_frame.shape)
-                print("bbox.shape",bbox.shape)
+                #print(task.id ,"-->",task.frames.shape,task.action_preds.shape,task.bboxes.shape,task.clip_vis_size,task.num_buffer_frames)
+                #bbox =task.bboxes
+                #print("bbox.shape",bbox.shape)
                 preds =task.action_preds
 
                 top_scores, top_classes, labels = [], [],[]
@@ -137,43 +135,44 @@ def demo(cfg):
                     top_classes.append(top_class)
                     lbls= [class_names[i] for i in top_class]
                     labels.append(lbls)
-                print("top_scores",top_scores)
-                #print("top_classes",top_classes)
-                print("labels",labels)
-                #print("preds.shape",preds.shape)
-                print('_________________________')
-                for b in bbox :
-                    x0, y0, x1, y1 = b
-                    x0 = int(x0.item())
-                    x1 = int(x1.item())
-                    y0 = int(y0.item())
-                    y1 = int(y1.item())
-                    print('\t', x0, x1, y0, y1,)
-                print('************************')
-                bbox =task.resized_boxes
-                print('_________RESIZED BOX________________')
-                for b in bbox :
-                    x0, y0, x1, y1 = b
-                    x0 = int(x0.item())
-                    x1 = int(x1.item())
-                    y0 = int(y0.item())
-                    y1 = int(y1.item())
-                    print('\t', x0, x1, y0, y1,)
-                print('************************')
-                frame_file = cfg.DEMO.SAVE_ACTION_FILE_PATH+"/frame_withbounds_" + str(task.id) + '.jpg'
-                im = Image.fromarray(task.frames[task.key_frame_index])
-                im.save(frame_file)
-                key_frame_file = cfg.DEMO.SAVE_ACTION_FILE_PATH+"/frame_" + str(task.id) + '.jpg'
-                im = Image.fromarray(task.key_frame)
-                im.save(key_frame_file)
+                # print("top_scores",top_scores)
+                # #print("top_classes",top_classes)
+                # print("labels",labels)
+                # #print("preds.shape",preds.shape)
+                # print('_________________________')
+                # for b in bbox :
+                #     x0, y0, x1, y1 = b
+                #     x0 = int(x0.item())
+                #     x1 = int(x1.item())
+                #     y0 = int(y0.item())
+                #     y1 = int(y1.item())
+                #     print('\t', x0, x1, y0, y1,)
+                # print('************************')
+                # bbox =task.resized_boxes
+                # print('_________RESIZED BOX________________')
+                # for b in bbox :
+                #     x0, y0, x1, y1 = b
+                #     x0 = int(x0.item())
+                #     x1 = int(x1.item())
+                #     y0 = int(y0.item())
+                #     y1 = int(y1.item())
+                #     print('\t', x0, x1, y0, y1,)
+                # print('************************')
+                frame_file = cfg.DEMO.SAVE_ACTION_FILE_PATH+"/" + str(task.id) + '.jpg' 
+                cv2.imwrite(frame_file, task.frames[task.key_frame_index])
+                key_frame_file = cfg.DEMO.SAVE_ACTION_FILE_PATH+"/" + str(task.id) + '_BOX.jpg'
+                cv2.imwrite(key_frame_file, task.key_frame)
+    
+                frameRef =task.id*cfg.DATA.NUM_FRAMES * cfg.DATA.SAMPLING_RATE +task.key_frame_index
                 for idx, box in enumerate(task.resized_boxes) :
                     x0, y0, x1, y1 = box
                     x0 = int(x0.item())
                     x1 = int(x1.item())
                     y0 = int(y0.item())
                     y1 = int(y1.item())
-                    print('No of rows={0}, INSERTING NEW ROW...'.format(df_frames.index))
-                    row_data =[task.id, frame_file, x0, x1, y0, y1, labels[idx], top_scores[idx]]
+                    #print('No of rows={0}, INSERTING NEW ROW...'.format(df_frames.index))
+
+                    row_data =[task.id, str(task.id) + '.jpg' ,frameRef,task.key_frame_index, x0, x1, y0, y1, labels[idx], top_scores[idx]]
                     row_data.extend(preds[idx].tolist())
                     df_frames.loc[len(df_frames.index)] = row_data
             frame_provider.display(task)
@@ -181,7 +180,7 @@ def demo(cfg):
         frame_provider.join()
         frame_provider.clean()
         if cfg.DEMO.SAVE_ACTION_FILE_PATH !='':
-            print(df_frames)
+            #print(df_frames)
             frame_csv = cfg.DEMO.SAVE_ACTION_FILE_PATH+'/frames.csv'
             df_frames.to_csv(frame_csv)
         logger.info("Finish demo in: {}".format(time.time() - start))
